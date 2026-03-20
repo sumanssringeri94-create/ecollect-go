@@ -1,5 +1,15 @@
 const User = require('../models/User');
-const { sendTokenResponse } = require('../utils/token');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// 🔐 Generate JWT Token
+const generateToken = (id) => {
+  return jwt.sign(
+    { id },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+};
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -10,7 +20,7 @@ const register = async (req, res) => {
 
     const { name, email, password, city, phone } = req.body;
 
-    // Validate fields
+    // ✅ Validate input
     if (!name || !email || !password || !city) {
       return res.status(400).json({
         success: false,
@@ -18,7 +28,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Check existing user
+    // ✅ Check if user exists
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
       return res.status(400).json({
@@ -27,17 +37,30 @@ const register = async (req, res) => {
       });
     }
 
-    // Create user
+    // ✅ Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ Create user
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password,
+      password: hashedPassword,
       city: city.trim(),
       phone: phone || '',
     });
 
-    // Send token
-    return sendTokenResponse(user, 201, res);
+    // ✅ Send response
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        city: user.city
+      }
+    });
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
@@ -64,7 +87,8 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    // ✅ Find user
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
       return res.status(401).json({
@@ -73,7 +97,8 @@ const login = async (req, res) => {
       });
     }
 
-    const isMatch = await user.comparePassword(password);
+    // ✅ Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -82,14 +107,23 @@ const login = async (req, res) => {
       });
     }
 
-    if (!user.isActive) {
+    if (user.isActive === false) {
       return res.status(401).json({
         success: false,
         message: 'Your account has been deactivated.',
       });
     }
 
-    return sendTokenResponse(user, 200, res);
+    return res.status(200).json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        city: user.city
+      }
+    });
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
@@ -106,7 +140,12 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    res.status(200).json({ success: true, user });
+
+    res.status(200).json({
+      success: true,
+      user
+    });
+
   } catch (error) {
     console.error("GETME ERROR:", error);
     res.status(500).json({
