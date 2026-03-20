@@ -1,4 +1,4 @@
-// 🔥 Load environment variables (ONLY THIS LINE — keep at top)
+// 🔥 Load environment variables
 require('dotenv').config();
 
 const express = require('express');
@@ -12,14 +12,27 @@ connectDB();
 
 const app = express();
 
-// ─── Middleware ───────────────────────────────
+// ─── ✅ FIXED CORS CONFIG ───────────────────────────────
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ecollect-go.vercel.app"
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // allow requests with no origin (Postman, mobile apps)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// ─── Middleware ───────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -45,14 +58,18 @@ app.use('/api/centers', require('./routes/centers'));
 
 // ─── 404 handler ─────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` });
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found.`
+  });
 });
 
 // ─── Global error handler ────────────────────
 app.use(errorHandler);
 
-// ─── Start ───────────────────────────────────
+// ─── Start server ────────────────────────────
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
   console.log(`📌 Environment: ${process.env.NODE_ENV}`);
