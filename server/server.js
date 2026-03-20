@@ -12,13 +12,13 @@ connectDB();
 
 const app = express();
 
-// ─── ✅ FIXED CORS CONFIG ───────────────────────────────
+// ─── ✅ FINAL CORS FIX ───────────────────────────────
 const allowedOrigins = [
   "http://localhost:5173",
   "https://ecollect-go.vercel.app"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // allow requests with no origin (Postman, mobile apps)
     if (!origin) return callback(null, true);
@@ -26,11 +26,17 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      return callback(new Error("Not allowed by CORS"));
+      return callback(null, false); // ❗ don't throw error (important)
     }
   },
   credentials: true,
-}));
+};
+
+// Apply CORS
+app.use(cors(corsOptions));
+
+// 🔥 VERY IMPORTANT: Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // ─── Middleware ───────────────────────────────
 app.use(express.json({ limit: '10mb' }));
