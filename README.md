@@ -184,7 +184,7 @@ npm run dev         # starts Vite dev server on :5173
 
 ### 4. Open the app
 
-Navigate to [http://localhost:5173](http://localhost:5173).
+Navigate to https://ecollect-go.vercel.app/
 
 ---
 
