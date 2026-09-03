@@ -184,7 +184,7 @@ npm run dev         # starts Vite dev server on :5173
 
 ### 4. Open the app
 
-Navigate to https://ecollect-go.vercel.app/
+Navigate to https://ecollect-go-1.onrender.com
 
 ---
 
