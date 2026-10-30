@@ -357,12 +357,18 @@ function applySort(list, sortObj) {
   });
 }
 
-// Helper for select
 function applySelect(doc, selectStr) {
   if (!selectStr || !doc) return doc;
   const clone = { ...doc };
   const fields = selectStr.split(' ').map(s => s.trim()).filter(Boolean);
   if (fields.length === 0) return doc;
+
+  // Handle +field (e.g. +password): keep all default fields plus the requested field
+  const plusFields = fields.filter(f => f.startsWith('+'));
+  if (plusFields.length === fields.length) {
+    return clone;
+  }
+
   if (fields[0].startsWith('-')) {
     for (const f of fields) {
       delete clone[f.slice(1)];
@@ -371,7 +377,8 @@ function applySelect(doc, selectStr) {
   } else {
     const result = { _id: doc._id };
     for (const f of fields) {
-      if (doc[f] !== undefined) result[f] = doc[f];
+      const fieldName = f.startsWith('+') ? f.slice(1) : f;
+      if (doc[fieldName] !== undefined) result[fieldName] = doc[fieldName];
     }
     return result;
   }

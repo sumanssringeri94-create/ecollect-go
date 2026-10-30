@@ -22,7 +22,7 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ecollect_default_secret_key_2026');
 
     // Find user
     const user = await User.findById(decoded.id);

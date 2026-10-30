@@ -1,8 +1,12 @@
 import axios from 'axios';
 
 // Base URL — uses Vite proxy in dev, direct URL in prod
+const rawBase = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '')
+  : (import.meta.env.DEV ? 'http://localhost:5000' : 'https://ecollect-backend.onrender.com');
+
 const API = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api',
+  baseURL: `${rawBase}/api`,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
