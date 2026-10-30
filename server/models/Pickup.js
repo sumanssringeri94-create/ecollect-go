@@ -66,4 +66,21 @@ const pickupSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Pickup', pickupSchema);
+const MongoosePickup = mongoose.models.Pickup || mongoose.model('Pickup', pickupSchema);
+
+module.exports = new Proxy(MongoosePickup, {
+  construct(target, args) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { createModelInstance } = require('../localDb');
+      return createModelInstance('pickups', args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { Pickup } = require('../localDb');
+      return Pickup[prop];
+    }
+    return target[prop];
+  },
+});

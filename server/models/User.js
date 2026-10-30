@@ -91,4 +91,21 @@ userSchema.methods.updateLevel = function () {
   else this.level = 'Beginner';
 };
 
-module.exports = mongoose.model('User', userSchema);
+const MongooseUser = mongoose.models.User || mongoose.model('User', userSchema);
+
+module.exports = new Proxy(MongooseUser, {
+  construct(target, args) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { createModelInstance } = require('../localDb');
+      return createModelInstance('users', args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { User } = require('../localDb');
+      return User[prop];
+    }
+    return target[prop];
+  },
+});

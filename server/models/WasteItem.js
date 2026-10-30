@@ -89,4 +89,21 @@ wasteItemSchema.statics.getCategoryMeta = function (category) {
   return meta[category] || { points: 50, co2: 0.5 };
 };
 
-module.exports = mongoose.model('WasteItem', wasteItemSchema);
+const MongooseWasteItem = mongoose.models.WasteItem || mongoose.model('WasteItem', wasteItemSchema);
+
+module.exports = new Proxy(MongooseWasteItem, {
+  construct(target, args) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { createModelInstance } = require('../localDb');
+      return createModelInstance('wasteitems', args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { WasteItem } = require('../localDb');
+      return WasteItem[prop];
+    }
+    return target[prop];
+  },
+});

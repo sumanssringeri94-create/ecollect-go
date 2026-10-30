@@ -50,4 +50,21 @@ const centerSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Center', centerSchema);
+const MongooseCenter = mongoose.models.Center || mongoose.model('Center', centerSchema);
+
+module.exports = new Proxy(MongooseCenter, {
+  construct(target, args) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { createModelInstance } = require('../localDb');
+      return createModelInstance('centers', args[0]);
+    }
+    return new target(...args);
+  },
+  get(target, prop) {
+    if (process.env.USE_LOCAL_DB === 'true') {
+      const { Center } = require('../localDb');
+      return Center[prop];
+    }
+    return target[prop];
+  },
+});

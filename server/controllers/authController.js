@@ -56,9 +56,13 @@ const register = async (req, res) => {
       token: generateToken(user._id),
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
-        city: user.city
+        city: user.city,
+        role: user.role,
+        points: user.points,
+        level: user.level,
       }
     });
 
@@ -87,8 +91,8 @@ const login = async (req, res) => {
       });
     }
 
-    // ✅ Find user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // ✅ Find user (include password field which has select: false)
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
     if (!user) {
       return res.status(401).json({
@@ -119,9 +123,13 @@ const login = async (req, res) => {
       token: generateToken(user._id),
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
-        city: user.city
+        city: user.city,
+        role: user.role,
+        points: user.points,
+        level: user.level,
       }
     });
 
